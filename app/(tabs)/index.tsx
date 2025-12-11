@@ -18,21 +18,46 @@ export default function App() {
 
   const apiKey = "5c728cfd1ea14fc6ad3162608251012";
 
-  // Update clock every second
+  const getWeather = async () => {
+  try {
+    const url = `https://api.weatherapi.com/v1/current.json?key=${apiKey}&q=${location}`;
+
+    const res = await fetch(url);
+    const data = await res.json();
+
+    if (!data.current) {
+      console.log("Weather API error:", data);
+      return; // prevent crash
+    }
+
+    setWeather(data.current);
+
+  } catch (err) {
+    console.log("Fetch error:", err);
+  }
+};
+
+  // // Update clock every second
   useEffect(() => {
     const t = setInterval(() => setTime(new Date()), 1000);
+    getWeather();
     return () => clearInterval(t);
   }, []);
 
   // Fetch weather on location change
-  useEffect(() => {
-    fetch(
-      `https://api.weatherapi.com/v1/current.json?key=${apiKey}&q=${location}`
-    )
-      .then((res) => res.json())
-      .then((d) => setWeather(d.current))
-      .catch(() => {});
-  }, [location]);
+  // useEffect(() => {
+  //   fetch(
+  //     `https://api.weatherapi.com/v1/current.json?key=${apiKey}&q=${location}`
+  //   )
+  //     .then((res) => res.json())
+  //     .then((d) => setWeather(d.current))
+  //     .catch(() => {});
+  // }, [location]);
+
+  useEffect(()=>{
+    getWeather();
+  },[location])
+
 
   // Binary digital sum
   const digitalSum = (num: number) =>
@@ -91,7 +116,7 @@ export default function App() {
               style={{ width: 50, height: 50 }}
             />
             <Text style={styles.weatherText}>
-              {weather.temp_c}°C — {weather.condition.text}
+             🌡 {weather.temp_c}°C — {weather.condition.text}
             </Text>
           </View>
         )}
@@ -102,6 +127,7 @@ export default function App() {
           items={locations}
           value={location}
           style={pickerStyles}
+          useNativeAndroidPickerStyle={false}
         />
     </LinearGradient>
   );
@@ -142,31 +168,32 @@ const styles = StyleSheet.create({
 });
 
 const pickerStyles = {
-  inputIOS: {
+   inputIOS: {
     fontSize: 18,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 50,
-    backgroundColor: "#1e1e1e",
-    color: "#fff",
+    paddingVertical: 12,
+    paddingHorizontal: 15,
     borderWidth: 2,
-    borderColor: "#00eaff",
-    shadowColor: "#00eaff",
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 12,
-    marginBottom: 10,
+    borderColor: "white",
+    borderRadius: 12,
+    color: "white",
+    backgroundColor: "rgba(0,0,0,0.3)",
+    marginVertical: 10,
+    textAlign: "center",
   },
   inputAndroid: {
     fontSize: 18,
     paddingVertical: 12,
-    paddingHorizontal: 20,
-    textAlign: 'center',
-    borderRadius: 50,
-    backgroundColor: "#1e1e1e",
-    color: "#fff",
+    paddingHorizontal: 15,
     borderWidth: 2,
-    borderColor: "#00eaff",
-    marginBottom: 10,
+    borderColor: "white",
+    borderRadius: 42,
+    color: "white",
+    backgroundColor: "rgba(0,0,0,0.3)",
+    marginVertical: 10,
+    textAlign: "center",
+  },
+  placeholder: {
+    color: "#ccc",
+    textAlign: "center",
   },
 };
