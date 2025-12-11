@@ -1,98 +1,172 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import React, { useEffect, useState } from "react";
+import { View, Text, StyleSheet, Image, ScrollView } from "react-native";
+import { LinearGradient } from 'expo-linear-gradient';
+import RNPickerSelect from "react-native-picker-select";
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+interface WeatherData {
+  temp_c: number;
+  condition: {
+    text: string;
+    icon: string;
+  };
+}
 
-export default function HomeScreen() {
+export default function App() {
+  const [time, setTime] = useState(new Date());
+  const [weather, setWeather] = useState<WeatherData | null>(null);
+  const [location, setLocation] = useState("London");
+
+  const apiKey = "5c728cfd1ea14fc6ad3162608251012";
+
+  // Update clock every second
+  useEffect(() => {
+    const t = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  // Fetch weather on location change
+  useEffect(() => {
+    fetch(
+      `https://api.weatherapi.com/v1/current.json?key=${apiKey}&q=${location}`
+    )
+      .then((res) => res.json())
+      .then((d) => setWeather(d.current))
+      .catch(() => {});
+  }, [location]);
+
+  // Binary digital sum
+  const digitalSum = (num: number) =>
+    num.toString(2).split("").filter((x) => x === "1").length;
+
+  const colorFromSum = (sum: number) => {
+    switch (sum) {
+      case 1:
+        return [0, 0, 255];
+      case 2:
+        return [255, 0, 0];
+      case 3:
+        return [0, 255, 0];
+      default:
+        return [255, 255, 255];
+    }
+  };
+
+  const h = colorFromSum(digitalSum(time.getHours()));
+  const m = colorFromSum(digitalSum(time.getMinutes()));
+  const s = colorFromSum(digitalSum(time.getSeconds()));
+
+  // Mix colors
+  const mix = (a: number, b: number, c: number) => Math.floor((a + b + c) / 3);
+  const finalColor = [
+    mix(h[0], m[0], s[0]),
+    mix(h[1], m[1], s[1]),
+    mix(h[2], m[2], s[2]),
+  ];
+
+  const locations = [
+    "London","New York","Mumbai","Tokyo","Dubai","Sydney","Paris","Greece","Egypt","Russia","Saudi Arabia","India","Sri Lanka","Nepal","Australia","Japan","China","Hong Kong","Vietnam","Somalia","Morocco","Switzerland","United Kingdom","Brazil","United States","Kingman Reef","Canada","Brazil","Greenland","New Zealand","Israel","Italy","Germany","Spain","Portugal","Bermuda","Cuba","Bahamas","Mexico"
+  ].map((item) => ({ label: item, value: item }));
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <LinearGradient
+      colors={[
+        `rgb(${finalColor[0]},${finalColor[1]},${finalColor[2]})`,
+        "#000000",
+      ]}
+      style={styles.container}
+    >
+      <ScrollView contentContainerStyle={styles.inner}>
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+        {/* Time */}
+        <Text style={styles.time}>{time.toLocaleTimeString()}</Text>
+
+        {/* Date */}
+        <Text style={styles.date}>{time.toDateString()}</Text>
+
+        {/* Weather */}
+        {weather && (
+          <View style={styles.weather}>
+            <Image
+              source={{ uri: "https:" + weather.condition.icon }}
+              style={{ width: 50, height: 50 }}
+            />
+            <Text style={styles.weatherText}>
+              {weather.temp_c}°C — {weather.condition.text}
+            </Text>
+          </View>
+        )}
+      </ScrollView>
+         {/* Location Selector */}
+        <RNPickerSelect
+          onValueChange={(value) => setLocation(value)}
+          items={locations}
+          value={location}
+          style={pickerStyles}
+        />
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: {
+    flex: 1,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  inner: {
+    alignItems: "center",
+    paddingTop: 100,
+    paddingBottom: 100,
+    borderRadius: 40,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  time: {
+    fontSize: 60,
+    color: "#fff",
+    fontWeight: "bold",
+    marginTop: 20,
+    textShadowColor: "#fff",
+    textShadowRadius: 10,
+  },
+  date: {
+    color: "#fff",
+    fontSize: 24,
+    marginTop: 10,
+  },
+  weather: {
+    marginTop: 30,
+    alignItems: "center",
+  },
+  weatherText: {
+    color: "#fff",
+    fontSize: 22,
+    marginTop: 10,
   },
 });
+
+const pickerStyles = {
+  inputIOS: {
+    fontSize: 18,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 50,
+    backgroundColor: "#1e1e1e",
+    color: "#fff",
+    borderWidth: 2,
+    borderColor: "#00eaff",
+    shadowColor: "#00eaff",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 12,
+    marginBottom: 10,
+  },
+  inputAndroid: {
+    fontSize: 18,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    textAlign: 'center',
+    borderRadius: 50,
+    backgroundColor: "#1e1e1e",
+    color: "#fff",
+    borderWidth: 2,
+    borderColor: "#00eaff",
+    marginBottom: 10,
+  },
+};
