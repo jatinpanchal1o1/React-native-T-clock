@@ -4,15 +4,15 @@ on:
   push:
     branches:
       - master # or your default branch, e.g., 'main'
-  workflow_dispatch: # Allows manual trigger from the Actions tab
+  # workflow_dispatch: # Allows manual trigger from the Actions tab
 
 jobs:
   build-and-deploy-web:
     runs-on: ubuntu-latest
-    permissions:
-      # contents: read
-      # issues: write
-      id-token: write
+    # permissions:
+    #   # contents: read
+    #   # issues: write
+    #   id-token: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
