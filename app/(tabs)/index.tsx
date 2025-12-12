@@ -13,26 +13,27 @@ interface WeatherData {
 }
 
 export default function App() {
-  const [time, setTime] = useState(new Date());
   const [weather, setWeather] = useState<WeatherData | null>(null);
 
   const [locationTZ, setLocationTZ] = useState("Asia/Kolkata");
   const [locationCity, setLocationCity] = useState("Mumbai");
 
+  const [timeString, setTimeString] = useState("");
+  const [dateString, setDateString] = useState("");
+  const [timeParts, setTimeParts] = useState({ h: 0, m: 0, s: 0 });
+
   const apiKey = "5c728cfd1ea14fc6ad3162608251012";
 
-  // ✅ FIXED — ALWAYS RETURNS VALID DATE
-  const getTimeInTimezone = (timezone: string) => {
+  // ---- TIME HELPERS ----
+  const extractTimeParts = (timezone: string) => {
     const now = new Date();
+
     const parts = new Intl.DateTimeFormat("en-US", {
       timeZone: timezone,
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
       hour: "2-digit",
       minute: "2-digit",
       second: "2-digit",
-      hour12: false,
+      hour12: true,
     }).formatToParts(now);
 
     const p: any = {};
@@ -40,40 +41,64 @@ export default function App() {
       if (x.type !== "literal") p[x.type] = x.value;
     });
 
-    // Fully ISO-compliant → never Invalid Date
-    return new Date(`${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}:${p.second}`);
+    return {
+      h: parseInt(p.hour),
+      m: parseInt(p.minute),
+      s: parseInt(p.second),
+    };
   };
 
-  // Weather fetcher
+  const updateTimeForTimezone = (timezone: string) => {
+    const now = new Date();
+
+    setTimeString(
+      new Intl.DateTimeFormat("en-US", {
+        timeZone: timezone,
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: true,
+      }).format(now)
+    );
+
+    setDateString(
+      new Intl.DateTimeFormat("en-US", {
+        timeZone: timezone,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }).format(now)
+    );
+
+    setTimeParts(extractTimeParts(timezone));
+  };
+
+  useEffect(() => {
+    updateTimeForTimezone(locationTZ);
+    const timer = setInterval(() => updateTimeForTimezone(locationTZ), 1000);
+    return () => clearInterval(timer);
+  }, [locationTZ]);
+
+  // ---- WEATHER ----
   const getWeather = async () => {
     try {
       const url = `https://api.weatherapi.com/v1/current.json?key=${apiKey}&q=${locationCity}`;
       const res = await fetch(url);
       const data = await res.json();
-      if (!data.current) {
-        console.log("Weather API error:", data);
-        return;
-      }
+
+      if (!data.current) return;
+
       setWeather(data.current);
-    } catch (e) {
-      console.log("Weather error:", e);
+    } catch (err) {
+      console.log("Weather error:", err);
     }
   };
-
-  // Time updates
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTime(getTimeInTimezone(locationTZ));
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [locationTZ]);
 
   useEffect(() => {
     getWeather();
   }, [locationCity]);
 
-  // Color logic
+  // ---- COLOR LOGIC ----
   const digitalSum = (num: number) =>
     num.toString(2).split("").filter((x) => x === "1").length;
 
@@ -90,18 +115,19 @@ export default function App() {
     }
   };
 
-  const h = colorFromSum(digitalSum(time.getHours()));
-  const m = colorFromSum(digitalSum(time.getMinutes()));
-  const s = colorFromSum(digitalSum(time.getSeconds()));
+  const hColor = colorFromSum(digitalSum(timeParts.h));
+  const mColor = colorFromSum(digitalSum(timeParts.m));
+  const sColor = colorFromSum(digitalSum(timeParts.s));
 
   const mix = (a: number, b: number, c: number) => Math.floor((a + b + c) / 3);
 
   const finalColor = [
-    mix(h[0], m[0], s[0]),
-    mix(h[1], m[1], s[1]),
-    mix(h[2], m[2], s[2]),
+    mix(hColor[0], mColor[0], sColor[0]),
+    mix(hColor[1], mColor[1], sColor[1]),
+    mix(hColor[2], mColor[2], sColor[2]),
   ];
 
+  // ---- LOCATIONS ----
   const locations = [
     { label: "London", tz: "Europe/London", city: "London" },
     { label: "New York", tz: "America/New_York", city: "New York" },
@@ -121,6 +147,13 @@ export default function App() {
     { label: "Hong Kong", tz: "Asia/Hong_Kong", city: "Hong Kong" },
     { label: "Spain", tz: "Europe/Madrid", city: "Madrid" },
     { label: "Mexico", tz: "America/Mexico_City", city: "Mexico City" },
+     // ---- NEW LOCATIONS YOU REQUESTED ----
+    { label: "Newfoundland & Labrador", tz: "America/St_Johns", city: "St. John's" },
+    { label: "South Australia", tz: "Australia/Adelaide", city: "Adelaide" },
+    { label: "Northern Territory", tz: "Australia/Darwin", city: "Darwin" },
+    { label: "New South Wales (West)", tz: "Australia/Broken_Hill", city: "Broken Hill" },
+    { label: "Western Australia (Southeast)", tz: "Australia/Eucla", city: "Eucla" },
+    { label: "Cocos Islands", tz: "Indian/Cocos", city: "West Island" },
   ];
 
   return (
@@ -132,13 +165,8 @@ export default function App() {
       style={styles.container}
     >
       <ScrollView contentContainerStyle={styles.inner}>
-        <Text style={styles.time}>
-          {time.toLocaleTimeString("en-US", { timeZone: locationTZ })}
-        </Text>
-
-        <Text style={styles.date}>
-          {time.toLocaleDateString("en-US", { timeZone: locationTZ })}
-        </Text>
+        <Text style={styles.time}>{timeString}</Text>
+        <Text style={styles.date}>{dateString}</Text>
 
         {weather && (
           <View style={styles.weather}>
@@ -153,7 +181,11 @@ export default function App() {
         )}
 
         <View style={{ marginTop: 60 }}>
-          <MoonUniverses locationTimezone={locationTZ} />
+          <MoonUniverses 
+           locationTimezone={locationTZ}  
+           locationCity={locationCity}                   // optional but recommended for accurate weatherapi lookups
+           weatherApiKey= {apiKey}    // optional - will use default key if omitted// 
+            />
         </View>
       </ScrollView>
 
@@ -176,10 +208,9 @@ export default function App() {
   );
 }
 
+// ---- STYLES ----
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
+  container: { flex: 1 },
   inner: {
     alignItems: "center",
     paddingTop: 100,
@@ -216,7 +247,7 @@ const pickerStyles = {
     paddingHorizontal: 15,
     borderWidth: 2,
     borderColor: "white",
-    borderRadius: 12,
+    borderRadius: 27,
     color: "white",
     backgroundColor: "rgba(0,0,0,0.3)",
     marginVertical: 10,
@@ -228,7 +259,7 @@ const pickerStyles = {
     paddingHorizontal: 15,
     borderWidth: 2,
     borderColor: "white",
-    borderRadius: 12,
+    borderRadius: 27,
     color: "white",
     backgroundColor: "rgba(0,0,0,0.3)",
     marginVertical: 10,
