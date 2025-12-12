@@ -77,9 +77,9 @@ deploy:
          with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
-          timeout: 600000
-          error_count: 10
-          reporting_interval: 5000
-          artifact_name: github-pages
-          preview: false
+          # timeout: 600000
+          # error_count: 10
+          # reporting_interval: 5000
+          # artifact_name: github-pages
+          # preview: false
         # Note: Ensure your workflow has the permissions from my first response (contents: read, pages: write, id-token: write)
