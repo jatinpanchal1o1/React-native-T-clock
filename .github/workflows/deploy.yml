@@ -58,8 +58,16 @@ jobs:
           name: github-pages  # Must match the artifact_name in deploy-pages
           path: dist  # Path to the exported web files
 
+deploy:
+    runs-on: ubuntu-latest
+    needs: build  # Ensures this runs after the build job succeeds
+    environment:
+      name: github-pages  # Required for GitHub Pages deployments
+      url: ${{ steps.deployment.outputs.page_url }}  # Optional: Adds a link to the deployed page in the workflow summary
+    steps:
+      # Deploy to GitHub Pages (using the uploaded artifact from the build job)
       - name: Deploy to GitHub Pages
-        if: success()  # Only deploy if builds succeed
+        id: deployment  # Optional: Allows referencing the deployment URL
         uses: actions/deploy-pages@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
