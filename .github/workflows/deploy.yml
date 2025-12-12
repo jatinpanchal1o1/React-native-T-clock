@@ -1,7 +1,7 @@
 name: Build Expo App with EAS
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write  # Required for GitHub Pages deployment and OIDC authentication
 
