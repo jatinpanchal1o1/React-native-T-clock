@@ -48,7 +48,8 @@ jobs:
       # Optional: Deploy to GitHub Pages or another service (if your app is web-based)
       # This could tie back to your original deploy-pages issue if you're building a web app
       - name: Build for Web
-        run: eas build --platform web --non-interactive --profile production
+        # run: eas build --platform web --non-interactive --profile production
+        run: npx expo export --platform web --output-dir dist  # Exports to 'dist' folder
 
       - name: Deploy to GitHub Pages
         if: success()  # Only deploy if builds succeed
