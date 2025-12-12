@@ -1,46 +1,63 @@
-name: Deploy Expo Web to GitHub Pages
+name: Build Expo App with EAS
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write  # Required for GitHub Pages deployment and OIDC authentication
 
 on:
   push:
-    branches:
-      - master # or your default branch, e.g., 'main'
-    workflow_dispatch: # Allows manual trigger from the Actions tab
-     permissions:
-      contents: write
-      issues: write
-      id-token: write
+    branches: [master]  # Trigger on pushes to main branch
+  pull_request:
+    branches: [master]
 
 jobs:
-  build-and-deploy-web:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18 # Use a compatible Node.js version (e.g., 18 or higher)
-
-      - name: Setup Expo
-        uses: expo/expo-github-action@v8
-        with:
-          # Optional: if you need access to private expo services, set EXPO_TOKEN in GitHub secrets
-          token: ${{ secrets.EXPO_TOKEN }} 
+          node-version: '18'  # Use a stable Node version
+          cache: 'npm'
 
       - name: Install dependencies
-        run: npm install # or yarn install, pnpm install
+        run: npm ci
 
-      - name: Export the web app
-        run: npx expo export --platform web
-        # This command creates a production-ready static bundle in the 'dist' directory
-
-      - name: Upload GitHub Pages artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Setup EAS
+        uses: expo/expo-github-action@v8
         with:
-          path: ./dist # The directory containing the static files
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Build for Android
+        run: eas build --platform android --non-interactive --profile production  # Adjust profile as needed
+
+      - name: Build for iOS
+        run: eas build --platform ios --non-interactive --profile production  # Adjust profile as needed
+
+      # Optional: Publish to Expo (if you want to update the app)
+      - name: Publish to Expo
+        run: eas update --non-interactive
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      # Optional: Deploy to GitHub Pages or another service (if your app is web-based)
+      # This could tie back to your original deploy-pages issue if you're building a web app
+      - name: Build for Web
+        run: eas build --platform web --non-interactive --profile production
 
       - name: Deploy to GitHub Pages
-        id: deployment
+        if: success()  # Only deploy if builds succeed
         uses: actions/deploy-pages@v4
-        # Grant the GITHUB_TOKEN write permissions for the deployment to work
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          timeout: 600000
+          error_count: 10
+          reporting_interval: 5000
+          artifact_name: github-pages
+          preview: false
+        # Note: Ensure your workflow has the permissions from my first response (contents: read, pages: write, id-token: write)
