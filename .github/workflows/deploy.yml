@@ -38,5 +38,5 @@ jobs:
 
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v3
+        uses: actions/deploy-pages@v4
         # Grant the GITHUB_TOKEN write permissions for the deployment to work
