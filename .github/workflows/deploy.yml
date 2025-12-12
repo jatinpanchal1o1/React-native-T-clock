@@ -75,7 +75,8 @@ deploy:
       -  name: Deploy to GitHub Pages
          uses: peaceiris/actions-gh-pages@v3
          with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
           timeout: 600000
           error_count: 10
           reporting_interval: 5000
