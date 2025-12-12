@@ -41,7 +41,7 @@ jobs:
 
       # Optional: Publish to Expo (if you want to update the app)
       - name: Publish to Expo
-        run: eas update --non-interactive
+        run: eas update --auto
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
 
