@@ -2,25 +2,41 @@ name: Deploy Expo Web to GitHub Pages
 
 on:
   push:
-    branches: [ master ] # Or 'main', the branch you push to
+    branches:
+      - master # or your default branch, e.g., 'main'
+  workflow_dispatch: # Allows manual trigger from the Actions tab
 
 jobs:
-  deploy:
+  build-and-deploy-web:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '18' # Use a compatible Node version
-          cache: 'npm' # Or 'yarn', 'pnpm'
-      - name: Install Dependencies
+          node-version: 18 # Use a compatible Node.js version (e.g., 18 or higher)
+
+      - name: Setup Expo
+        uses: expo/expo-github-action@v8
+        with:
+          # Optional: if you need access to private expo services, set EXPO_TOKEN in GitHub secrets
+          token: ${{ secrets.EXPO_TOKEN }} 
+
+      - name: Install dependencies
         run: npm install # or yarn install, pnpm install
-      - name: Build for Web
-        run: npx expo export:web # Exports static files to a 'web-build' or 'dist' folder
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+
+      - name: Export the web app
+        run: npx expo export --platform web
+        # This command creates a production-ready static bundle in the 'dist' directory
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./web-build # Adjust to your output directory (e.g., dist, build)
-          # If using a custom domain, add 'cname: yourdomain.com'
+          path: ./dist # The directory containing the static files
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+        # Grant the GITHUB_TOKEN write permissions for the deployment to work
