@@ -51,6 +51,13 @@ jobs:
         # run: eas build --platform web --non-interactive --profile production
         run: npx expo export --platform web --output-dir dist  # Exports to 'dist' folder
 
+           # Upload the web build as an artifact for deployment
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: github-pages  # Must match the artifact_name in deploy-pages
+          path: dist  # Path to the exported web files
+
       - name: Deploy to GitHub Pages
         if: success()  # Only deploy if builds succeed
         uses: actions/deploy-pages@v4
