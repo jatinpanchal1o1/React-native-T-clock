@@ -1,51 +1,26 @@
-name: Deploy
+name: Deploy Expo Web to GitHub Pages
 
 on:
   push:
-    branches:
-      - master
+    branches: [ master ] # Or 'main', the branch you push to
 
 jobs:
-  build:
-    name: Build
+  deploy:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
-
-      - name: Setup Node
+      - uses: actions/checkout@v3
+      - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 20
-
-      - name: Install dependencies
-        uses: bahmutov/npm-install@v1
-
-      - name: Build project
-        run: npm run build
-
-      - name: Upload production-ready build files
-        uses: actions/upload-artifact@v4
-        with:
-          name: production-files
-          path: ./dist
-
-  deploy:
-    name: Deploy
-    needs: build
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master'
-
-    steps:
-      - name: Download artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: production-files
-          path: ./dist
-
+          node-version: '18' # Use a compatible Node version
+          cache: 'npm' # Or 'yarn', 'pnpm'
+      - name: Install Dependencies
+        run: npm install # or yarn install, pnpm install
+      - name: Build for Web
+        run: npx expo export:web # Exports static files to a 'web-build' or 'dist' folder
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
+          publish_dir: ./web-build # Adjust to your output directory (e.g., dist, build)
+          # If using a custom domain, add 'cname: yourdomain.com'
