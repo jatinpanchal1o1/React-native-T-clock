@@ -40,10 +40,10 @@ jobs:
       #   run: eas build --platform ios --non-interactive --profile production  # Adjust profile as needed
 
       # Optional: Publish to Expo (if you want to update the app)
-      - name: Publish to Expo
-        run: eas update --auto
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      # - name: Publish to Expo
+      #   run: eas update --auto
+      #   env:
+      #     EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
 
       # Optional: Deploy to GitHub Pages or another service (if your app is web-based)
       # This could tie back to your original deploy-pages issue if you're building a web app
