@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, Image, ScrollView } from "react-native";
+import { View, Text, StyleSheet, Image, ScrollView, ViewStyle } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import RNPickerSelect from "react-native-picker-select";
 import MoonUniverses from "../../components/moonUniverse";
+import ZodiacPlanetaryClock from "../../components/zodic";
 
 interface WeatherData {
   temp_c: number;
@@ -13,6 +14,7 @@ interface WeatherData {
 }
 
 export default function App() {
+
   const [weather, setWeather] = useState<WeatherData | null>(null);
 
   const [locationTZ, setLocationTZ] = useState("Asia/Kolkata");
@@ -129,6 +131,7 @@ export default function App() {
 
   // ---- LOCATIONS ----
   const locations = [
+    { label: "New Delhi", tz: "Asia/Kolkata", city: "New Delhi" },
     { label: "London", tz: "Europe/London", city: "London" },
     { label: "New York", tz: "America/New_York", city: "New York" },
     { label: "Mumbai", tz: "Asia/Kolkata", city: "Mumbai" },
@@ -187,8 +190,12 @@ export default function App() {
            weatherApiKey= {apiKey}    // optional - will use default key if omitted// 
             />
         </View>
+        <View style = {{ marginTop: 50 }}>
+        <ZodiacPlanetaryClock locationTimezone={locationTZ} theme="white"/>
+        </View>
       </ScrollView>
-
+      <View style={{ marginVertical: 1 }}>
+      <View style={shadowBox}>
       <RNPickerSelect
         onValueChange={(labelValue) => {
           const selected = locations.find((l) => l.label === labelValue);
@@ -204,35 +211,69 @@ export default function App() {
         style={pickerStyles}
         useNativeAndroidPickerStyle={false}
       />
+      </View>
+      </View>
     </LinearGradient>
   );
 }
 
-// ---- STYLES ----
+const shadowBox: ViewStyle = {
+  backgroundColor: "rgba(0,0,0,0.35)",
+  borderRadius: 27,
+
+  // 🌐 Web
+  boxShadow: "0px 14px 36px rgba(0,0,0,0.45)",
+
+  // 🍎 iOS
+  shadowColor: "#000",
+  shadowOffset: { width: 0, height: 14 },
+  shadowOpacity: 0.45,
+  shadowRadius: 20,
+
+  // 🤖 Android
+  elevation: 16,
+};
+
+///---------------------/////
+
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: {
+    flex: 1,
+  },
+
   inner: {
     alignItems: "center",
     paddingTop: 100,
     paddingBottom: 100,
   },
+
   time: {
     fontSize: 60,
     color: "#fff",
     fontWeight: "bold",
     marginTop: 20,
-    textShadowColor: "#fff",
-    textShadowRadius: 10,
+
+    textShadowColor: "rgba(255,255,255,0.85)",
+    textShadowRadius: 16,
   },
+
   date: {
     color: "#fff",
     fontSize: 24,
     marginTop: 10,
+    opacity: 0.9,
   },
+
   weather: {
     marginTop: 30,
     alignItems: "center",
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    opacity: 0.9,
+
+    ...shadowBox,
   },
+
   weatherText: {
     color: "#fff",
     fontSize: 22,
@@ -240,29 +281,22 @@ const styles = StyleSheet.create({
   },
 });
 
+// ---- STYLES ----
 const pickerStyles = {
   inputIOS: {
     fontSize: 18,
-    paddingVertical: 12,
-    paddingHorizontal: 15,
-    borderWidth: 2,
-    borderColor: "white",
-    borderRadius: 27,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
     color: "white",
-    backgroundColor: "rgba(0,0,0,0.3)",
-    marginVertical: 10,
-    textAlign: "center",
+    textAlign: "center" as const,
+    backgroundColor: "transparent",
   },
   inputAndroid: {
     fontSize: 18,
-    paddingVertical: 12,
-    paddingHorizontal: 15,
-    borderWidth: 2,
-    borderColor: "white",
-    borderRadius: 27,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
     color: "white",
-    backgroundColor: "rgba(0,0,0,0.3)",
-    marginVertical: 10,
-    textAlign: "center",
+    textAlign: "center" as const,
+    backgroundColor: "transparent",
   },
 };
